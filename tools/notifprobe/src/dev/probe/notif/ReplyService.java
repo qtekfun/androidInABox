@@ -8,7 +8,7 @@ import android.util.Log;
 public class ReplyService extends Service {
     @Override public int onStartCommand(Intent i, int f, int id) {
         Bundle r = RemoteInput.getResultsFromIntent(i);
-        Main.ack(this, "REPLY_SVC_OK text=" + (r == null ? null : r.getCharSequence("reply")));
+        Main.ack(this, "REPLY_SVC_OK text=" + (r == null ? null : r.getCharSequence("reply")) + Main.customOf(i));
         stopSelf();
         return START_NOT_STICKY;
     }
