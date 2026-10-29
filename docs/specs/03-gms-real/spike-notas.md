@@ -85,3 +85,18 @@ pueden contener datos personales.
   `fix/app-component-factory`.
 - **Pendiente** (diseño de la spec 03): resolver los providers de GMS contra el GMS
   virtual en lugar del sistema real.
+
+## Experimento 3: con AppComponentFactory del invitado, 2026-10-29
+
+- **La factoría se instala** para Play Store (`PhoneskyAppComponentFactory`) y para GMS
+  (`com.google.android.gms.chimera.GmsAppComponentFactory`). La de GMS es la que carga
+  sus módulos Chimera.
+- **Persiste** `ClassCastException: Cannot cast qoy to aqpi/ariq`, solo en
+  `com.android.vending:background`.
+- **Nueva hipótesis:** la app elige su `Application` y su grafo de componentes según el
+  **nombre de proceso**. En el box el invitado ve el del stub
+  (`com.qtekfun.androidinabox:pN`). Se corrige en `fix/process-name` virtualizando:
+  - `Application.getProcessName()`
+  - `Process.myProcessName()`
+  - `ActivityThread.currentProcessName()`
+  - `/proc/self/cmdline`
