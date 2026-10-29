@@ -53,3 +53,35 @@ pueden contener datos personales.
   y el impacto de `WorkManagerProxy` sobre GMS.
 - Desactivar el desvío de providers de GMS cuando GMS está instalado en el box
   (diseño de la spec 03).
+
+## Experimento 2: con los arreglos de alias, contexto de aplicación e icono, 2026-10-29
+
+- **Motor:** `aiab-main` con las specs 05, 01 y 02, más los fixes de activity-alias,
+  `Application` del invitado (`mApplication`/`mAllApplications`, sin `WorkManagerProxy`)
+  y la recursión de `areNotificationsEnabled`.
+- **Prueba:** abrir Play Store en el box y observar 60 s.
+
+### Resultados
+
+| Señal | Experimento 1 | Experimento 2 |
+|---|---|---|
+| `Unable to instantiate ... AssetBrowserActivity` (alias) | sí | **no** |
+| `GmsModuleFndr: NullPointerException ... Application.getClassLoader()` | sí | **no** |
+| `WorkManager is not initialized properly` | sí | **no** |
+| `jni_android.cc` (cronet) en procesos de **GMS** | sí | **no** |
+| `ClassCastException: Cannot cast qoy to aqpi/ariq` en `com.android.vending:background` | sí | sí |
+| `Permission Denial: opening provider ...AppDoctorProvider` | sí | sí |
+
+### Conclusiones
+
+- **El crash de cronet era un efecto secundario.** Lo provocaba una excepción Java no
+  capturada en el mismo proceso. Ahora solo aparece en el proceso `:background` de
+  Play Store, por el `ClassCastException`. Los procesos de GMS ya no mueren.
+- **Causa del `ClassCastException`:** Play Store declara
+  `android:appComponentFactory="...PhoneskyAppComponentFactory"`, y el motor lo
+  ignoraba. `LoadedApk` crea la factoría a partir del `ApplicationInfo`; el motor
+  sustituye el `ApplicationInfo` después, y la factoría queda la de por defecto.
+  Afecta a cualquier app moderna con factoría propia. Se corrige en
+  `fix/app-component-factory`.
+- **Pendiente** (diseño de la spec 03): resolver los providers de GMS contra el GMS
+  virtual en lugar del sistema real.
