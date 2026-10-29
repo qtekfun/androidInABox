@@ -66,3 +66,17 @@ No hay verificación en dispositivo todavía.
   pero la actividad destino debe poder arrancar en segundo plano.
 - Inalámbrico: RFCOMM, unión a Wi-Fi de la unidad y llamadas dependen de spec 06 y de privilegios que el box no tiene.
 - Sin compilar contra un APK real de gearhead; todo marcado como "sin verificar" hasta la prueba en dispositivo.
+
+## Prueba en dispositivo (OPPO, Android 16, 2026-10-29)
+
+- Android Auto 18.1 se clona del sistema al box (perfil 1, 4 splits) y **arranca**: proceso
+  `com.google.android.projection.gearhead:projection` y actividad
+  `com.google.android.gearhead.vanagon.VnLaunchPadActivity`, sin crash.
+- El simulador DHU está instalado en el equipo de desarrollo (`extras;google;auto`).
+- **Siguiente:**
+  - abrir los ajustes de desarrollador de Android Auto dentro del box para activar
+    "Start head unit server". Hace falta que la UI del box pueda lanzar actividades
+    no principales, o un acceso directo de depuración;
+  - `adb forward tcp:5277 tcp:5277` y lanzar el DHU.
+- Depende de que GMS tenga la sesión iniciada (Android Auto la exige para la
+  configuración inicial).
