@@ -1,0 +1,106 @@
+name: release
+
+# Builds the engine (submodule engine/), signs it with the release key and publishes it:
+# - push to main → pre-release dev-<n> for testing
+# - tag v*       → release
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NDK_VERSION: 29.0.13846066
+  BUILD_TOOLS: 35.0.0
+  # SHA-256 of the release certificate (public). The build fails if the APK is signed with another key.
+  CERT_SHA256: 84ec8db08de8497d49616ba5d2d19ba4d2679704ee46804e5f8c8fe9f3fb9d73
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "ndk;$NDK_VERSION" "platforms;android-35" "build-tools;$BUILD_TOOLS" > /dev/null
+
+      - name: Version
+        id: version
+        run: |
+          code=$((1000 + GITHUB_RUN_NUMBER))
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            name="${GITHUB_REF_NAME#v}"; tag="$GITHUB_REF_NAME"; pre=false
+          else
+            name="0.0.${GITHUB_RUN_NUMBER}-dev+${GITHUB_SHA::7}"; tag="dev-${GITHUB_RUN_NUMBER}"; pre=true
+          fi
+          { echo "code=$code"; echo "name=$name"; echo "tag=$tag"; echo "pre=$pre"; } >> "$GITHUB_OUTPUT"
+
+      - name: Keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.AIAB_KEYSTORE_B64 }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "Falta el secreto AIAB_KEYSTORE_B64"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Build
+        working-directory: engine
+        env:
+          AIAB_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          AIAB_KEYSTORE_PASSWORD: ${{ secrets.AIAB_KEYSTORE_PASSWORD }}
+          AIAB_KEY_ALIAS: ${{ secrets.AIAB_KEY_ALIAS }}
+          AIAB_KEY_PASSWORD: ${{ secrets.AIAB_KEY_PASSWORD }}
+          AIAB_VERSION_CODE: ${{ steps.version.outputs.code }}
+          AIAB_VERSION_NAME: ${{ steps.version.outputs.name }}
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Verify
+        run: |
+          BT="$ANDROID_HOME/build-tools/$BUILD_TOOLS"
+          READELF="$ANDROID_HOME/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          apk=$(ls engine/app/build/outputs/apk/release/*arm64-v8a-release.apk)
+          # Signature with the expected key
+          "$BT/apksigner" verify --print-certs "$apk" | tee signer.txt
+          grep -qi "SHA-256 digest: $CERT_SHA256" signer.txt || { echo "Unexpected signing certificate"; exit 1; }
+          # 16 KB alignment
+          "$BT/zipalign" -c -P 16 4 "$apk"
+          mkdir -p x && unzip -q -o "$apk" 'lib/*' -d x
+          for so in x/lib/*/*.so; do
+            "$READELF" -lW "$so" | awk '/LOAD/{print $NF}' | grep -qv '0x4000' && { echo "Not aligned to 16 KB: $so"; exit 1; } || true
+          done
+          # Upstream telemetry must not come back (ADR-0003)
+          unzip -p "$apk" 'classes*.dex' | grep -aq 'logs-sender-api' && { echo "Upstream telemetry present"; exit 1; } || true
+          mkdir -p dist && cp "$apk" "dist/androidInABox-${{ steps.version.outputs.name }}-arm64-v8a.apk"
+          (cd dist && sha256sum *.apk > SHA256SUMS)
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          NAME: ${{ steps.version.outputs.name }}
+          PRE: ${{ steps.version.outputs.pre }}
+        run: |
+          engine_sha=$(git -C engine rev-parse --short HEAD)
+          notes="Engine: androidInABox-engine@${engine_sha}. Repo: ${GITHUB_SHA::7}.
+          Signing certificate SHA-256: ${CERT_SHA256}.
+          Test build: install with adb install -r, or from the file."
+          flags=(--title "$NAME" --notes "$notes" --target "$GITHUB_SHA")
+          [[ "$PRE" == true ]] && flags+=(--prerelease)
+          gh release create "$TAG" "${flags[@]}" dist/*
