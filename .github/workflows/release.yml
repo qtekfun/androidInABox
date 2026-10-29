@@ -42,7 +42,7 @@ jobs:
       - name: Android SDK packages
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
-            "ndk;$NDK_VERSION" "platforms;android-35" "build-tools;$BUILD_TOOLS" > /dev/null
+            "ndk;$NDK_VERSION" "platforms;android-36" "build-tools;$BUILD_TOOLS" > /dev/null
 
       - name: Version
         id: version
