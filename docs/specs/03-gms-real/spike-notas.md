@@ -100,3 +100,35 @@ pueden contener datos personales.
   - `Process.myProcessName()`
   - `ActivityThread.currentProcessName()`
   - `/proc/self/cmdline`
+
+## Experimentos 4 a 11: hasta abrir Play Store, 2026-10-29
+
+Cadena de causas encontradas y corregidas, en orden. Cada arreglo dejaba ver el
+siguiente fallo.
+
+1. **Proceso equivocado para los providers.** El motor instalaba en todos los
+   procesos secundarios (`:background`) los providers del proceso principal. Estos
+   hacían cast al componente Dagger del principal y fallaban con
+   `ClassCastException qoy → aqpi`.
+   - Arreglo: cada proceso instala solo sus providers, como en Android.
+   - Diagnóstico por análisis estático del APK (`dexdump`).
+2. **Providers de GMS desviados al GMS real.** T03.6: se resuelven en el box cuando el
+   paquete está instalado allí.
+3. **Manejadores de excepciones del motor.** Cinco "crash prevention" se tragaban las
+   excepciones. Cronet abortaba con "the Java uncaught exception handler did not
+   terminate the process" y ocultaba la causa real.
+   - Arreglo: en procesos invitados se restaura el manejador del sistema.
+4. **Cronet:** `ConnectivityManager.getNetworkInfoForUid` exige `NETWORK_STACK`, un
+   permiso privilegiado.
+   - Arreglo: se responde con las llamadas no privilegiadas del servicio real
+     (`getActiveNetworkInfo`, `getActiveNetwork`). Llamarlas a través de
+     `ConnectivityManager` provocaba recursión.
+5. **`LocaleManager.setApplicationLocales`** exige `CHANGE_CONFIGURATION`.
+   - Arreglo: nuevo `ILocaleManagerProxy`. Sin idioma propio por app dentro del box.
+
+**Resultado:** Play Store abre dentro del box, con la pantalla "Inicia sesión para
+encontrar las películas, la música, los juegos…" y el botón **Iniciar sesión**, sin
+ningún crash en 40 s. Los procesos de GMS siguen vivos.
+
+**Siguiente:** iniciar sesión con una cuenta secundaria (paso c del plan de pruebas),
+que hace el propietario en el dispositivo.
