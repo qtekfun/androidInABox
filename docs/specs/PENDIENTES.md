@@ -56,3 +56,16 @@ arranque de M1, M2 o M3.
 17. **App comprobadora de Play Integrity (08):** ¿cuál usamos? La eliges tú.
 18. **Orden de 05:** las tareas de spoof y limpieza (T05.10–T05.14) no bloquean M1.
     Propuesta: hacerlas después de 01.
+
+## Interfaz (spec 09)
+
+19. **Estilo y tecnología del rediseño:** propuesta por defecto:
+    - Jetpack Compose con Material 3 y color dinámico (Material You).
+    - Modo claro y oscuro.
+    - Pantallas: perfiles → apps de cada perfil → ajustes de la app (GMS, spoof,
+      notificaciones), más un asistente de primera configuración (permisos,
+      batería, autoarranque) y la gestión de GMS.
+
+    ¿Tienes referencias visuales (GBox, GSpace, Shelter, Island…) o algo que quieras
+    evitar? ¿Cambiamos también el nombre visible "BlackBox" por "androidInABox" u
+    otro?

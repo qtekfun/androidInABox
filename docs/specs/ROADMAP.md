@@ -40,6 +40,7 @@ graph LR
 | **M5. Wear OS** | 06 | Reloj emparejado con la app compañera del box y notificaciones de WhatsApp del box en el reloj; o conclusión documentada de inviabilidad |
 | **M6. Android Auto** | 07 (spike) | Conclusión documentada con evidencias; si es viable, spec de implementación |
 | **Transversal** | 08 | Nivel de Play Integrity medido en cada hito a partir de M3 |
+| **M7. Interfaz nueva** | 09 | Rediseño completo de la UI heredada del upstream (feedback del propietario: "la UI es feísima"). Puede empezar en paralelo a M2–M4, porque no toca el motor |
 
 M2 no depende de GMS y puede avanzar en paralelo a M1 y M3.
 

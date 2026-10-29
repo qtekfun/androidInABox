@@ -57,3 +57,4 @@ Ver [ROADMAP.md](ROADMAP.md) para el orden, las dependencias y los hitos.
 | [06-wear-os](06-wear-os/) | Relojes Wear OS emparejados con apps del box | Spike + funcionalidad |
 | [07-android-auto](07-android-auto/) | Android Auto con apps del box | Spike |
 | [08-play-integrity](08-play-integrity/) | Medir y mejorar el nivel de Play Integrity | Medición |
+| 09-ui (pendiente) | Rediseño completo de la interfaz del host | Funcionalidad |
