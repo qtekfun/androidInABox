@@ -1,0 +1,4 @@
+[submodule "engine"]
+	path = engine
+	url = https://github.com/qtekfun/androidInABox-engine.git
+	branch = aiab-main
