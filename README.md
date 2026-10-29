@@ -16,6 +16,8 @@ Estado: **fase 0**, prueba de viabilidad del motor (fork de
 
 ## Documentación
 
+- Si el móvil avisa de "riesgos" al instalar: [docs/usuario/aviso-seguridad.md](docs/usuario/aviso-seguridad.md) (pulsa **Ignorar**, nunca "Corregir ahora")
+
 - Veredicto: [docs/fase0/veredicto.md](docs/fase0/veredicto.md)
 - Cómo funciona el motor: [docs/fase0/arquitectura-motor.md](docs/fase0/arquitectura-motor.md)
 - Riesgos por versión de Android: [docs/fase0/riesgos-android.md](docs/fase0/riesgos-android.md)
