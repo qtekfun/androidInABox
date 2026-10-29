@@ -43,6 +43,30 @@ graph LR
 
 M2 no depende de GMS y puede avanzar en paralelo a M1 y M3.
 
+## Estimación (días de desarrollo, borrador)
+
+| Spec | Spike | Implementación | Total | Confianza |
+|---|---|---|---|---|
+| 05 mantenimiento | — | 10 (6 bloquean M1) | 10 | media |
+| 01 split APK | 1 (diagnóstico) | 12,5 | 13,5 | media |
+| 02 notificaciones | incluido | 14,5 | 14,5 | media-alta |
+| 03 GMS real | 10 (corte el día 5) | 17 (25–35 con imprevistos) | 27–45 | baja |
+| 04 segundo plano | incluido | 18 | 18 | media |
+| 08 Play Integrity | — | 5–6 | 5–6 | media |
+| 06 Wear OS | 5,5 | 26–36 | 31–41 | baja (~35 % de que sea viable) |
+| 07 Android Auto | 5,5–6 | sin base hasta el spike (25–60+) | — | muy baja (por cable 10–20 %, solo DHU 25–35 %) |
+
+Hasta M4 (cadena crítica: 05 + 01 + 02 + 03 + 04): unos **83–101 días**.
+Con 06 y 08: unos **119–148 días**. Android Auto aparte.
+
+Estas cifras suben respecto al veredicto de la fase 0 (46–64 días con microG) por
+tres motivos:
+- el GMS real;
+- la verificación en Android 16 y 17;
+- los spikes de Wear OS y Android Auto.
+
+Decisiones pendientes: [PENDIENTES.md](PENDIENTES.md).
+
 ## Reglas de ejecución
 
 - Cada tarea termina con un commit pequeño, su verificación descrita en el mensaje y la
