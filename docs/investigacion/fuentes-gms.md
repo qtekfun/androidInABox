@@ -91,17 +91,30 @@ python3 -I scripts/investigacion/remotezip.py <URL del .zip> | grep -E "\.apk|\.
 ## Verificar la firma antes de instalar
 
 ```bash
-apksigner verify --print-certs GmsCore.apk | grep -E "SHA-1|SHA-256"
+apksigner verify -v --print-certs GmsCore.apk | grep -E "scheme|SHA-256"
 ```
 
-- GMS, GSF y Play Store de Google se firman con el certificado de plataforma de Google
-  cuyo SHA-1 es `38:91:8A:45:3D:07:19:93:54:F8:B1:9A:F0:5E:C6:56:2C:ED:57:88`.
-  Comparar con el GMS instalado en un móvil de confianza:
+Medido en el OPPO (29-10-2026) sobre los APK de fábrica:
+
+| APK | Esquema | Certificado actual (SHA-256) |
+|---|---|---|
+| `GmsCore.apk` | v3 con **rotación de clave**: el sistema muestra 3 certificados anteriores en el linaje | `5f2391277b1dbd489000467e4c2fa6af802430080457dce2f618992e9dfb5402` |
+| `Phonesky.apk`, `GoogleServicesFramework.apk` | — | SHA-1 `bd32424203e0fb25f36b57e5aa356f9bdd1da998` |
+
+- GmsCore usa APK Signature Scheme v3 con linaje de rotación. El certificado "clásico"
+  de Google (SHA-1 `38:91:8A:45:…`) que comprueban muchas apps queda en el linaje,
+  no como firmante actual (sin verificar).
+- Consecuencia para el motor (spec 03): el `PackageInfo` virtual debe exponer
+  `signingInfo` con el historial (`getSigningCertificateHistory`) y no solo
+  `signatures`. Si no, las apps que verifican GMS lo rechazarán.
+- Comprobación práctica: comparar con el GMS instalado en un móvil de confianza.
 
   ```bash
-  adb shell dumpsys package com.google.android.gms | grep -A2 signatures
+  adb shell dumpsys package com.google.android.gms | grep -m1 "Signatures:"
   ```
-- Si no coincide, **no instalarlo**.
+
+  En el OPPO coincide: `5F:23:91:27:7B:1D:BD:48:...:54:02`. Si no coincide, **no
+  instalarlo**.
 
 ## Relación con los dispositivos de prueba
 
